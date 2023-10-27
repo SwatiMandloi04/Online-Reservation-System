@@ -1,0 +1,288 @@
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.regex.Pattern;
+
+public class UserRegistrationSystem {
+    private Map<String, String> userDatabase;
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$");
+
+    public UserRegistrationSystem() {
+        userDatabase = new HashMap<>();
+    }
+
+    public boolean isUsernameTaken(String username) {
+        return userDatabase.containsKey(username);
+    }
+
+    public void registerUser(String username, String password) {
+        userDatabase.put(username, password);
+    }
+
+    public boolean checkPassword(String username, String password) {
+        String storedPassword = userDatabase.get(username);
+        return storedPassword != null && storedPassword.equals(password);
+    }
+
+    public static boolean isNameValid(String name) {
+        char firstChar = name.charAt(0);
+        return Character.isUpperCase(firstChar);
+    }
+
+    public static boolean isEmailValid(String email) {
+        return EMAIL_PATTERN.matcher(email).matches();
+    }
+
+    public static boolean isPasswordValid(String password, String username) {
+        if (password.equals(username)) {
+            return false; // Password matches username
+        }
+        if (password.length() < 8 || password.length() > 16) {
+            return false; // Password length not within the required range
+        }
+        if (!(Character.isUpperCase(password.charAt(0)) && Pattern.compile("[A-Z]").matcher(String.valueOf(password.charAt(0))).find())) {
+            return false; // First letter is not capitalized
+        }
+        if (!Pattern.compile("[!@#$%^&*()_+\\-=\\[\\]{};':\",.<>/?]").matcher(password).find()) {
+            return false; // Special character missing
+        }
+        if (!Pattern.compile("[0-9]").matcher(password).find()) {
+            return false; // Digit missing
+        }
+        return true;
+    }
+
+    public static void main(String[] args) {
+        UserRegistrationSystem registrationSystem = new UserRegistrationSystem();
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Welcome to the User Registration and Reservation System");
+
+        while (true) {
+            System.out.println("1. Register\n2. Login\n3. Reservation\n4. Quit");
+            System.out.print("Enter your choice: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume the newline character
+
+            if (choice == 1) {
+                // Registration
+                System.out.print("Enter your first name :");
+                String firstName = scanner.nextLine();
+
+                if (firstName.equals("quit")) {
+                    break;
+                }
+
+                if (!isNameValid(firstName)) {
+                    System.out.println("Please enter a first name with the first letter capitalized.");
+                    continue;
+                }
+
+                System.out.print("Enter your middle name (optional): ");
+                String middleName = scanner.nextLine();
+
+                System.out.print("Enter your last name: ");
+                String lastName = scanner.nextLine();
+
+                while (!isNameValid(lastName)) {
+                    System.out.println("Please enter a last name with the first letter capitalized.");
+                    lastName = scanner.nextLine();
+                }
+
+                String email = null;
+                while (email == null) {
+                    System.out.print("Enter your email address (in lowercase): ");
+                    email = scanner.nextLine();
+
+                    if (!isEmailValid(email)) {
+                        System.out.println("Please enter a valid email address in lowercase format.");
+                        email = null;
+                    }
+                }
+
+                System.out.print("Enter a new username (case-sensitive): ");
+                String username = null;
+                while (username == null) {
+                    username = scanner.nextLine();
+
+                    if (registrationSystem.isUsernameTaken(username)) {
+                        System.out.println("Username already taken. Please choose a different one.");
+                        username = null;
+                    }
+                }
+
+                String password = null;
+                while (password == null) {
+                    System.out.print("Enter a password: ");
+                    password = scanner.nextLine();
+
+                    if (!isPasswordValid(password, username)) {
+                        System.out.println("Please enter a valid password. It must be 8-16 characters, start with a capital letter, contain at least one digit, one special character, and should not match your username.");
+                        password = null;
+                    }
+                }
+
+                registrationSystem.registerUser(username, password);
+                System.out.println("Registration successful. You can now log in with your credentials.");
+
+            } else if (choice == 2) {
+                // Login
+                System.out.print("Enter your username: ");
+                String username = scanner.nextLine();
+
+                System.out.print("Enter your password: ");
+                String password = scanner.nextLine();
+
+                if (registrationSystem.isUsernameTaken(username) && registrationSystem.checkPassword(username, password)) {
+                    System.out.println("Login successful!");
+                } else {
+                    System.out.println("Invalid username or password. Please try again.");
+                }
+            } else if (choice == 3) {
+                // Reservation
+                System.out.println("Welcome to the Reservation System");
+
+                ReservationSystem reservationSystem = new ReservationSystem();
+                reservationSystem.makeReservation(scanner);
+            } else if (choice == 4) {
+                System.out.println("Exiting program.");
+                break;
+            } else {
+                System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+}
+
+class ReservationSystem {
+    private Map<String, String> trainNameMap;
+    private Map<String, String> trainClassMap;
+    private int pnrCounter = 1000; // Initialize PNR counter
+    private Map<String, String> reservations; // Added to store reservations
+
+    public ReservationSystem() {
+        // Initialize train information maps.
+        trainNameMap = new HashMap<>();
+        trainNameMap.put("101", "Train A");
+        trainNameMap.put("102", "Train B");
+
+        trainClassMap = new HashMap<>();
+        trainClassMap.put("Economy", "Economy Class");
+        trainClassMap.put("Business", "Business Class");
+
+        // Initialize the reservations map
+        reservations = new HashMap<>();
+    }
+
+    public void makeReservation(Scanner scanner) {
+        while (true) {
+            System.out.println("1. Make a Reservation\n2. Cancel a Reservation\n3. Exit");
+            System.out.print("Enter your choice: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume the newline character
+
+            if (choice == 1) {
+                // Make a Reservation
+                System.out.print("Enter your name: ");
+                String name = scanner.nextLine();
+
+                System.out.print("Enter your age: ");
+                int age = scanner.nextInt();
+                scanner.nextLine(); // Consume the newline character
+
+                System.out.print("Enter train number: ");
+                String trainNumber = scanner.nextLine();
+
+                String trainName = getTrainName(trainNumber);
+
+                System.out.print("Select class type (Economy/Business): ");
+                String classType = scanner.nextLine();
+                String classTypeName = getClassTypeName(classType);
+
+                System.out.print("Enter date of journey: ");
+                String dateOfJourney = scanner.nextLine();
+
+                System.out.print("Enter source (from): ");
+                String source = scanner.nextLine();
+
+                System.out.print("Enter destination (to): ");
+                String destination = scanner.nextLine();
+
+                // Generate a unique PNR number
+                String pnrNumber = generatePNRNumber();
+
+                // Save the reservation
+                saveReservation(pnrNumber, name);
+
+                // Process the reservation data as needed.
+                System.out.println("Reservation Details:");
+                System.out.println("PNR Number: " + pnrNumber);
+                System.out.println("Name: " + name);
+                System.out.println("Age: " + age);
+                System.out.println("Train Number: " + trainNumber);
+                System.out.println("Train Name: " + trainName);
+                System.out.println("Class Type: " + classTypeName);
+                System.out.println("Date of Journey: " + dateOfJourney);
+                System.out.println("Source: " + source);
+                System.out.println("Destination: " + destination);
+                System.out.println("Reservation completed.");
+            } else if (choice == 2) {
+                // Cancel a Reservation
+                cancelReservation(scanner);
+            } else if (choice == 3) {
+                System.out.println("Exiting Reservation System.");
+                break;
+            } else {
+                System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
+    private void saveReservation(String pnr, String name) {
+        // Save the reservation data in the map
+        reservations.put(pnr, name);
+        // Print a confirmation message
+        System.out.println("Reservation with PNR " + pnr + " has been saved.");
+    }
+
+    private void cancelReservation(Scanner scanner) {
+        System.out.print("Enter PNR for reservation cancellation: ");
+        String pnrToCancel = scanner.nextLine().trim();
+
+        if (reservations.containsKey(pnrToCancel)) {
+            String passengerName = reservations.get(pnrToCancel);
+
+            System.out.println("Reservation Details:");
+            System.out.println("PNR: " + pnrToCancel);
+            System.out.println("Passenger Name: " + passengerName);
+
+            System.out.print("Confirm ticket cancellation (Yes/No): ");
+            String confirmation = scanner.nextLine().trim().toLowerCase();
+
+            if (confirmation.equals("yes")) {
+                // Remove the reservation
+                reservations.remove(pnrToCancel);
+                System.out.println("Reservation with PNR " + pnrToCancel + " has been canceled.");
+            } else {
+                System.out.println("Reservation cancellation not confirmed.");
+            }
+        } else {
+            System.out.println("Reservation with PNR " + pnrToCancel + " not found.");
+        }
+    }
+
+    private String getTrainName(String trainNumber) {
+        // Get the train name based on the train number from the map.
+        return trainNameMap.get(trainNumber);
+    }
+
+    private String getClassTypeName(String classType) {
+        // Get the class type name based on the class type from the map.
+        return trainClassMap.get(classType);
+    }
+
+    private String generatePNRNumber() {
+        pnrCounter++; // Increment the PNR counter
+        return "PNR" + pnrCounter;
+    }
+}
